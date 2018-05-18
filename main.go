@@ -58,12 +58,26 @@ func fetchAllStudent(c *gin.Context) {
 	db.Find(&model)
 
 	if len(model) <= 0 {
-		c.JSON(http.StatusNotFound, gin.H{"message": http.StatusNotFound, "result": "Data Nof Found"})
+		c.JSON(http.StatusNotFound, gin.H{"message": http.StatusNotFound, "result": "Data Tidak Ada"})
 	}
 
 	for _, item := range model {
 		vo = append(vo, transferModelToVo(item))
 	}
+	c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": vo})
+}
+
+func fetchSingleStuden(c *gin.Context) {
+	var model student
+	var vo transformedStudent
+
+	modelID := c.Param("id")
+	db.Find(&model, modelID)
+
+	if model.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": http.StatusNotFound, "result": "Data Tidak Ada"})
+	}
+	vo = transferModelToVo(model)
 	c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": vo})
 }
 
@@ -133,7 +147,8 @@ func main() {
 	v1 := router.Group("/api/student")
 	{
 		v1.POST("", cretedStudent)
-		v1.GET("",fetchAllStudent)
+		v1.GET("", fetchAllStudent)
+		v1.GET("/:id", fetchSingleStuden)
 	}
 	router.Run(":20001")
 }
