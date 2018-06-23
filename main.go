@@ -40,9 +40,10 @@ type (
 
 func cretedStudent(c *gin.Context) {
 	var std transformedStudent
+	var model student
 	c.Bind(&std)
 	validasi := validatorCreated(std)
-	var model student = transferVoToModel(std)
+	model = transferVoToModel(std)
 	if validasi != "" {
 		c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": validasi})
 	} else {
@@ -81,6 +82,38 @@ func fetchSingleStuden(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": vo})
 }
 
+func updateStudent(c *gin.Context) {
+	var model student
+	var vo transformedStudent
+	modelID := c.Param("id")
+	db.First(&model, modelID)
+
+	if model.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": http.StatusNotFound, "result": "Data Tidak Ada"})
+	}
+	c.Bind(&vo)
+
+	validasi := validatorCreated(vo)
+	if validasi != "" {
+		c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": validasi})
+	} else {
+		db.Model(&model).Update(transferVoToModel(vo))
+		c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": model})
+	}
+}
+
+func deleteStudent(c *gin.Context) {
+	var model student
+	modelID := c.Param("id")
+
+	db.First(&model, modelID)
+	if model.ID == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": http.StatusNotFound, "result": "Datat Tidak di Temukan"})
+	}
+	db.Delete(model)
+	c.JSON(http.StatusOK, gin.H{"message": http.StatusOK, "result": "Data Telah berhasil di hapus"})
+}
+
 func transferModelToVo(model student) transformedStudent {
 	var vo transformedStudent
 	statusAktif := false
@@ -112,8 +145,8 @@ func transferVoToModel(vo transformedStudent) student {
 		Nama:        vo.Nama,
 		Kelas:       vo.Kelas,
 		NoHp:        vo.NoHp,
-		Alamat:      vo.Alamat,
 		StatusAktif: statusAktif,
+		Alamat:      vo.Alamat,
 	}
 	return model
 }
@@ -149,6 +182,8 @@ func main() {
 		v1.POST("", cretedStudent)
 		v1.GET("", fetchAllStudent)
 		v1.GET("/:id", fetchSingleStuden)
+		v1.PUT("/:id", updateStudent)
+		v1.DELETE("/:id", deleteStudent)
 	}
 	router.Run(":20001")
 }
